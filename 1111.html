@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사과밭 네모칸</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: linear-gradient(to top, #87ceeb 0%, #87ceeb 50%, #7cfc00 50%, #7cfc00 100%);
+    height: 100vh;
+    position: relative;
+  }
+
+  /* 사과나무 스타일 */
+  .tree {
+    position: absolute;
+    width: 60px;
+    height: 100px;
+    background: #8b4513;
+    border-radius: 10px;
+  }
+
+  .tree::after {
+    content: '';
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle at 50% 50%, #228B22 60%, #006400 100%);
+    border-radius: 50%;
+    top: -70px;
+    left: -20px;
+  }
+
+  .square {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background-color: #ff6347;
+    border: 2px solid #fff;
+    border-radius: 5px;
+  }
+</style>
+</head>
+<body>
+
+<!-- 사과나무 여러 개 배치 -->
+<div class="tree" style="left: 50px; bottom: 50px;"></div>
+<div class="tree" style="left: 200px; bottom: 80px;"></div>
+<div class="tree" style="left: 350px; bottom: 60px;"></div>
+<div class="tree" style="left: 500px; bottom: 90px;"></div>
+<div class="tree" style="left: 650px; bottom: 70px;"></div>
+
+<script>
+  const numSquares = 10; // 네모칸 개수
+  const squares = [];
+
+  // 네모칸 생성
+  for (let i = 0; i < numSquares; i++) {
+    const div = document.createElement('div');
+    div.className = 'square';
+    div.style.left = Math.random() * window.innerWidth + 'px';
+    div.style.top = Math.random() * window.innerHeight/2 + 'px';
+    document.body.appendChild(div);
+    squares.push({
+      el: div,
+      x: parseFloat(div.style.left),
+      y: parseFloat(div.style.top),
+      vx: (Math.random() - 0.5) * 4,
+      vy: (Math.random() - 0.5) * 4
+    });
+  }
+
+  function animate() {
+    squares.forEach(sq => {
+      sq.x += sq.vx;
+      sq.y += sq.vy;
+
+      // 화면 밖으로 나가지 않게 반사
+      if (sq.x < 0 || sq.x > window.innerWidth - 40) sq.vx *= -1;
+      if (sq.y < 0 || sq.y > window.innerHeight/2 - 40) sq.vy *= -1;
+
+      sq.el.style.left = sq.x + 'px';
+      sq.el.style.top = sq.y + 'px';
+    });
+    requestAnimationFrame(animate);
+  }
+
+  animate();
+</script>
+</body>
+</html>
