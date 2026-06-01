@@ -1,0 +1,2061 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COSMOS — 우주 탐험 아카이브</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Noto+Serif+KR:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void: #01010a;
+    --deep: #050518;
+    --nebula-blue: #0d1b4b;
+    --nebula-purple: #1a0a3d;
+    --star: #f0eefc;
+    --dust: #8a88b8;
+    --gold: #d4a843;
+    --plasma: #6e3bff;
+    --aurora: #00d4aa;
+    --red-giant: #e84855;
+    --text-primary: #f0eefc;
+    --text-secondary: #8a88b8;
+    --accent: #d4a843;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--void);
+    color: var(--text-primary);
+    font-family: 'Noto Serif KR', serif;
+    overflow-x: hidden;
+    cursor: none;
+  }
+  /* Custom cursor */
+  .cursor {
+    position: fixed;
+    width: 8px; height: 8px;
+    background: var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.08s;
+    mix-blend-mode: difference;
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 32px; height: 32px;
+    border: 1px solid rgba(212,168,67,0.5);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: transform 0.15s, width 0.15s, height 0.15s;
+  }
+
+  /* Starfield canvas */
+  #starfield {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 4rem;
+    mix-blend-mode: normal;
+    border-bottom: 1px solid rgba(138,136,184,0.1);
+    background: rgba(1,1,10,0.6);
+    backdrop-filter: blur(12px);
+  }
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 0.2em;
+    color: var(--star);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--gold); }
+  .nav-links { display: flex; gap: 3rem; list-style: none; }
+  .nav-links a {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dust);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+  .nav-links a:hover { color: var(--gold); }
+  .nav-coords {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--dust);
+    opacity: 0.6;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 4rem;
+    overflow: hidden;
+  }
+  .hero-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.4em;
+    color: var(--aurora);
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    animation: fadeUp 1s ease both;
+  }
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(6rem, 14vw, 16rem);
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    color: var(--star);
+    animation: fadeUp 1s 0.2s ease both;
+  }
+  .hero-title .line2 { color: transparent; -webkit-text-stroke: 1px rgba(240,238,252,0.3); }
+  .hero-sub {
+    margin-top: 3rem;
+    max-width: 520px;
+    font-size: 1.05rem;
+    line-height: 1.9;
+    color: var(--dust);
+    font-weight: 300;
+    animation: fadeUp 1s 0.4s ease both;
+  }
+  .hero-cta {
+    margin-top: 3rem;
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    animation: fadeUp 1s 0.6s ease both;
+  }
+  .btn-primary {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--void);
+    background: var(--gold);
+    padding: 1rem 2.5rem;
+    border: none;
+    cursor: none;
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .btn-primary:hover { opacity: 0.85; transform: translateY(-2px); }
+  .btn-ghost {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--star);
+    border: 1px solid rgba(240,238,252,0.2);
+    padding: 1rem 2.5rem;
+    transition: border-color 0.3s, color 0.3s, transform 0.3s;
+    cursor: none;
+  }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); }
+  .hero-stat {
+    position: absolute;
+    right: 4rem;
+    bottom: 4rem;
+    text-align: right;
+    animation: fadeUp 1s 0.8s ease both;
+  }
+  .hero-stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 5rem;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--plasma);
+    line-height: 1;
+  }
+  .hero-stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    color: var(--dust);
+    text-transform: uppercase;
+  }
+  /* Scroll indicator */
+  .scroll-hint {
+    position: absolute;
+    bottom: 2rem;
+    left: 4rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    animation: fadeUp 1s 1s ease both;
+  }
+  .scroll-line {
+    width: 40px;
+    height: 1px;
+    background: var(--dust);
+    position: relative;
+    overflow: hidden;
+  }
+  .scroll-line::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%;
+    height: 100%;
+    background: var(--gold);
+    animation: scanline 1.5s infinite;
+  }
+  @keyframes scanline { to { left: 100%; } }
+  .scroll-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    color: var(--dust);
+    text-transform: uppercase;
+  }
+
+  /* ── SECTION BASE ── */
+  section {
+    position: relative;
+    z-index: 1;
+  }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 2rem;
+    margin-bottom: 4rem;
+  }
+  .section-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+  }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 6vw, 5rem);
+    letter-spacing: 0.05em;
+    line-height: 1;
+  }
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: rgba(138,136,184,0.2);
+    margin-bottom: 0.4rem;
+  }
+
+  /* ── SOLAR SYSTEM ── */
+  .solar-section {
+    padding: 8rem 4rem;
+    background: linear-gradient(180deg, var(--void) 0%, var(--deep) 50%, var(--void) 100%);
+  }
+  .solar-intro {
+    max-width: 640px;
+    margin-bottom: 6rem;
+    font-size: 1rem;
+    line-height: 1.9;
+    color: var(--dust);
+    font-weight: 300;
+  }
+  .planets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5px;
+  }
+  .planet-card {
+    background: rgba(13,27,75,0.4);
+    border: 1px solid rgba(138,136,184,0.1);
+    padding: 2.5rem 2rem;
+    transition: background 0.4s, border-color 0.4s, transform 0.4s;
+    cursor: none;
+    position: relative;
+    overflow: hidden;
+  }
+  .planet-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 2px;
+    height: 0;
+    background: var(--gold);
+    transition: height 0.4s;
+  }
+  .planet-card:hover { background: rgba(26,10,61,0.6); border-color: rgba(212,168,67,0.3); transform: translateY(-4px); }
+  .planet-card:hover::before { height: 100%; }
+  .planet-icon {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    margin-bottom: 1.5rem;
+    position: relative;
+  }
+  .planet-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--gold);
+    letter-spacing: 0.3em;
+    margin-bottom: 0.75rem;
+  }
+  .planet-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
+  }
+  .planet-type {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--aurora);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+  .planet-desc {
+    font-size: 0.85rem;
+    line-height: 1.8;
+    color: var(--dust);
+    font-weight: 300;
+    margin-bottom: 1.5rem;
+  }
+  .planet-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .planet-stat-row {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--dust);
+    border-bottom: 1px solid rgba(138,136,184,0.1);
+    padding-bottom: 0.4rem;
+  }
+  .planet-stat-row span:last-child { color: var(--star); }
+
+  /* Planet color indicators */
+  .p-mercury { background: radial-gradient(circle at 40% 40%, #b5b5b5, #6b6b6b); }
+  .p-venus   { background: radial-gradient(circle at 40% 40%, #ffd591, #c47a2b); }
+  .p-earth   { background: radial-gradient(circle at 40% 40%, #4fc3f7, #0d47a1, #2e7d32 50%); }
+  .p-mars    { background: radial-gradient(circle at 40% 40%, #ef8a62, #a33418); }
+  .p-jupiter { background: radial-gradient(circle at 40% 40%, #d4a84b, #a0522d); background-size: 100% 30px; }
+  .p-saturn  { background: radial-gradient(circle at 40% 40%, #e8c97a, #b8860b); box-shadow: 0 0 0 6px rgba(232,201,122,0.2), 0 0 0 12px rgba(232,201,122,0.08); }
+  .p-uranus  { background: radial-gradient(circle at 40% 40%, #7fffd4, #1a8f80); }
+  .p-neptune { background: radial-gradient(circle at 40% 40%, #4169e1, #191970); }
+
+  /* ── DEEP SPACE OBJECTS ── */
+  .deep-section {
+    padding: 8rem 4rem;
+  }
+  .dso-feature {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    margin-bottom: 6rem;
+    align-items: center;
+  }
+  .dso-feature.reverse { direction: rtl; }
+  .dso-feature.reverse > * { direction: ltr; }
+  .dso-visual {
+    aspect-ratio: 4/3;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(138,136,184,0.15);
+  }
+  .dso-content h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.5rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+    line-height: 1;
+  }
+  .dso-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--aurora);
+    margin-bottom: 1rem;
+  }
+  .dso-content p {
+    font-size: 0.95rem;
+    line-height: 1.9;
+    color: var(--dust);
+    font-weight: 300;
+    margin-bottom: 1.5rem;
+  }
+  .dso-data {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(138,136,184,0.15);
+  }
+  .dso-datum-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dust);
+    margin-bottom: 0.25rem;
+  }
+  .dso-datum-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.05em;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  /* SVG illustrations for deep space objects */
+  .nebula-svg, .blackhole-svg, .galaxy-svg { width: 100%; height: 100%; }
+
+  /* ── TIMELINE: SPACE HISTORY ── */
+  .timeline-section {
+    padding: 8rem 4rem;
+    background: linear-gradient(180deg, var(--void) 0%, rgba(13,27,75,0.3) 50%, var(--void) 100%);
+  }
+  .timeline {
+    position: relative;
+    padding-left: 4rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, var(--plasma) 20%, var(--aurora) 80%, transparent);
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 4rem;
+    padding-left: 2rem;
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: opacity 0.7s, transform 0.7s;
+  }
+  .timeline-item.visible { opacity: 1; transform: translateX(0); }
+  .timeline-dot {
+    position: absolute;
+    left: -4.35rem;
+    top: 0.4rem;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 12px var(--gold);
+  }
+  .timeline-date {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .timeline-event {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+  }
+  .timeline-body {
+    font-size: 0.9rem;
+    line-height: 1.85;
+    color: var(--dust);
+    font-weight: 300;
+    max-width: 560px;
+  }
+  .timeline-agency {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--aurora);
+    border: 1px solid rgba(0,212,170,0.3);
+    padding: 0.2rem 0.7rem;
+    margin-top: 0.75rem;
+  }
+
+  /* ── MISSIONS ── */
+  .missions-section {
+    padding: 8rem 4rem;
+  }
+  .missions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+  }
+  .mission-card {
+    background: rgba(5,5,24,0.8);
+    border: 1px solid rgba(138,136,184,0.08);
+    padding: 2.5rem 2rem;
+    position: relative;
+    overflow: hidden;
+    cursor: none;
+    transition: border-color 0.3s;
+  }
+  .mission-card:hover { border-color: rgba(110,59,255,0.4); }
+  .mission-card:hover .mission-bg { opacity: 0.08; }
+  .mission-bg {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.4s;
+    background: radial-gradient(circle at 80% 20%, var(--plasma), transparent 60%);
+  }
+  .mission-status {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+  .status-active { background: var(--aurora); box-shadow: 0 0 8px var(--aurora); }
+  .status-complete { background: var(--gold); }
+  .status-future { background: var(--plasma); }
+  .status-active-text { color: var(--aurora); }
+  .status-complete-text { color: var(--gold); }
+  .status-future-text { color: var(--plasma); }
+  .mission-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.5rem;
+    position: relative;
+  }
+  .mission-target {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--dust);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+  }
+  .mission-desc {
+    font-size: 0.85rem;
+    line-height: 1.8;
+    color: var(--dust);
+    font-weight: 300;
+    position: relative;
+  }
+  .mission-year {
+    position: absolute;
+    top: 2rem; right: 2rem;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.5rem;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(138,136,184,0.15);
+    line-height: 1;
+  }
+
+  /* ── SCALE OF UNIVERSE ── */
+  .scale-section {
+    padding: 8rem 4rem;
+    background: var(--deep);
+  }
+  .scale-intro {
+    max-width: 640px;
+    font-size: 1rem;
+    line-height: 1.9;
+    color: var(--dust);
+    font-weight: 300;
+    margin-bottom: 5rem;
+  }
+  .scale-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .scale-item {
+    display: grid;
+    grid-template-columns: 200px 1fr 200px;
+    align-items: center;
+    gap: 2rem;
+    padding: 2rem 0;
+    border-bottom: 1px solid rgba(138,136,184,0.1);
+    position: relative;
+  }
+  .scale-object-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 0.05em;
+    line-height: 1;
+  }
+  .scale-object-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--dust);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-top: 0.25rem;
+  }
+  .scale-bar-container {
+    height: 4px;
+    background: rgba(138,136,184,0.1);
+    position: relative;
+  }
+  .scale-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--plasma), var(--aurora));
+    transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+    width: 0;
+  }
+  .scale-bar.animated { }
+  .scale-size {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    text-align: right;
+  }
+
+  /* ── FACTS MARQUEE ── */
+  .marquee-section {
+    padding: 4rem 0;
+    overflow: hidden;
+    border-top: 1px solid rgba(138,136,184,0.1);
+    border-bottom: 1px solid rgba(138,136,184,0.1);
+    background: rgba(110,59,255,0.05);
+  }
+  .marquee-track {
+    display: flex;
+    gap: 0;
+    animation: marquee 40s linear infinite;
+    white-space: nowrap;
+  }
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .marquee-item {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 0.1em;
+    color: var(--dust);
+    padding: 0 3rem;
+  }
+  .marquee-sep {
+    color: var(--gold);
+    font-size: 0.8rem;
+  }
+
+  /* ── EXOPLANETS ── */
+  .exo-section {
+    padding: 8rem 4rem;
+  }
+  .exo-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3rem;
+    margin-top: 4rem;
+  }
+  .exo-card {
+    display: grid;
+    grid-template-columns: 100px 1fr;
+    gap: 2rem;
+    padding: 2rem;
+    border: 1px solid rgba(138,136,184,0.1);
+    background: rgba(5,5,24,0.6);
+    cursor: none;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .exo-card:hover { border-color: rgba(0,212,170,0.3); transform: translateY(-3px); }
+  .exo-visual {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    align-self: center;
+  }
+  .exo-catalog {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--aurora);
+    letter-spacing: 0.25em;
+    margin-bottom: 0.5rem;
+  }
+  .exo-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    line-height: 1;
+  }
+  .exo-desc {
+    font-size: 0.82rem;
+    line-height: 1.8;
+    color: var(--dust);
+    font-weight: 300;
+  }
+
+  /* ── PHYSICS ── */
+  .physics-section {
+    padding: 8rem 4rem;
+    background: linear-gradient(180deg, var(--void) 0%, rgba(110,59,255,0.05) 50%, var(--void) 100%);
+  }
+  .physics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3rem;
+    margin-top: 4rem;
+  }
+  .physics-card {
+    padding: 3rem 2rem;
+    border-left: 1px solid rgba(212,168,67,0.3);
+    position: relative;
+  }
+  .physics-equation {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.4rem;
+    color: var(--gold);
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.05em;
+  }
+  .physics-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+  }
+  .physics-desc {
+    font-size: 0.85rem;
+    line-height: 1.85;
+    color: var(--dust);
+    font-weight: 300;
+  }
+  .physics-who {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--dust);
+    letter-spacing: 0.15em;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(138,136,184,0.15);
+  }
+
+  /* ── TELESCOPE ── */
+  .telescope-section {
+    padding: 8rem 4rem;
+  }
+  .telescope-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: start;
+  }
+  .telescope-feature-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+  }
+  .telescope-feature-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--dust);
+    text-transform: uppercase;
+    margin-bottom: 3rem;
+  }
+  .telescope-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .telescope-item {
+    padding: 1.5rem;
+    border: 1px solid rgba(138,136,184,0.1);
+    cursor: none;
+    transition: border-color 0.3s, background 0.3s;
+  }
+  .telescope-item:hover {
+    border-color: rgba(212,168,67,0.3);
+    background: rgba(212,168,67,0.03);
+  }
+  .telescope-item-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.5rem;
+  }
+  .telescope-item-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.05em;
+  }
+  .telescope-item-year {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+  }
+  .telescope-item-desc {
+    font-size: 0.82rem;
+    line-height: 1.8;
+    color: var(--dust);
+    font-weight: 300;
+  }
+
+  /* ── STARS TYPE ── */
+  .stars-section {
+    padding: 8rem 4rem;
+    background: var(--deep);
+  }
+  .stars-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    margin-top: 4rem;
+  }
+  .star-type-card {
+    padding: 2.5rem 1.75rem;
+    border: 1px solid rgba(138,136,184,0.08);
+    position: relative;
+    cursor: none;
+    overflow: hidden;
+  }
+  .star-type-card:hover .star-glow { opacity: 0.15; }
+  .star-glow {
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.4s;
+    filter: blur(30px);
+  }
+  .star-circle {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    margin-bottom: 1.5rem;
+    position: relative;
+  }
+  .star-class {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--gold);
+    letter-spacing: 0.3em;
+    margin-bottom: 0.5rem;
+  }
+  .star-type-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+  }
+  .star-type-desc {
+    font-size: 0.8rem;
+    line-height: 1.85;
+    color: var(--dust);
+    font-weight: 300;
+    margin-bottom: 1rem;
+  }
+  .star-temp {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--dust);
+    letter-spacing: 0.1em;
+  }
+  .star-temp strong { color: var(--star); }
+
+  /* ── FUTURE ── */
+  .future-section {
+    padding: 8rem 4rem;
+  }
+  .future-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin-top: 4rem;
+  }
+  .future-card {
+    padding: 3rem 2.5rem;
+    background: rgba(5,5,24,0.8);
+    border: 1px solid rgba(138,136,184,0.1);
+    cursor: none;
+    transition: border-color 0.4s, transform 0.4s;
+    position: relative;
+    overflow: hidden;
+  }
+  .future-card:hover { border-color: rgba(110,59,255,0.4); transform: translateY(-4px); }
+  .future-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--plasma), var(--aurora));
+    transition: width 0.5s;
+  }
+  .future-card:hover::after { width: 100%; }
+  .future-year {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(110,59,255,0.4);
+    line-height: 1;
+    margin-bottom: 1rem;
+  }
+  .future-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+  }
+  .future-desc {
+    font-size: 0.88rem;
+    line-height: 1.85;
+    color: var(--dust);
+    font-weight: 300;
+  }
+
+  /* ── QUOTE ── */
+  .quote-section {
+    padding: 10rem 4rem;
+    text-align: center;
+    position: relative;
+  }
+  .quote-text {
+    font-family: 'Noto Serif KR', serif;
+    font-size: clamp(1.4rem, 2.5vw, 2.2rem);
+    line-height: 1.7;
+    color: var(--star);
+    font-weight: 300;
+    max-width: 900px;
+    margin: 0 auto 3rem;
+    font-style: italic;
+    position: relative;
+  }
+  .quote-text::before {
+    content: '\201C';
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 10rem;
+    color: rgba(212,168,67,0.12);
+    position: absolute;
+    top: -4rem;
+    left: -3rem;
+    line-height: 1;
+  }
+  .quote-author {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+  .quote-sep { color: var(--dust); margin: 0 1rem; }
+
+  /* ── FOOTER ── */
+  footer {
+    position: relative;
+    z-index: 1;
+    padding: 4rem;
+    border-top: 1px solid rgba(138,136,184,0.1);
+  }
+  .footer-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 4rem;
+  }
+  .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    letter-spacing: 0.1em;
+    color: var(--star);
+  }
+  .footer-logo span { color: var(--gold); }
+  .footer-tagline {
+    font-size: 0.85rem;
+    color: var(--dust);
+    font-weight: 300;
+    margin-top: 0.5rem;
+    max-width: 280px;
+    line-height: 1.7;
+  }
+  .footer-links-col h4 {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+  .footer-links-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; }
+  .footer-links-col a {
+    font-size: 0.85rem;
+    color: var(--dust);
+    text-decoration: none;
+    font-weight: 300;
+    transition: color 0.3s;
+  }
+  .footer-links-col a:hover { color: var(--star); }
+  .footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(138,136,184,0.1);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--dust);
+    letter-spacing: 0.1em;
+  }
+  .footer-coords { opacity: 0.5; }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Responsive tweaks */
+  @media (max-width: 900px) {
+    nav { padding: 1.2rem 2rem; }
+    .nav-links { display: none; }
+    .nav-coords { display: none; }
+    .hero { padding: 0 2rem; }
+    .hero-title { font-size: 5rem; }
+    .hero-stat { right: 2rem; bottom: 6rem; }
+    .solar-section, .deep-section, .timeline-section,
+    .missions-section, .scale-section, .exo-section,
+    .physics-section, .telescope-section, .stars-section,
+    .future-section, .quote-section { padding: 5rem 2rem; }
+    .dso-feature { grid-template-columns: 1fr; gap: 2rem; }
+    .dso-feature.reverse { direction: ltr; }
+    .missions-grid { grid-template-columns: 1fr; }
+    .physics-grid { grid-template-columns: 1fr; }
+    .telescope-content { grid-template-columns: 1fr; }
+    .stars-grid { grid-template-columns: repeat(2, 1fr); }
+    .future-grid { grid-template-columns: 1fr; }
+    .exo-grid { grid-template-columns: 1fr; }
+    footer { padding: 3rem 2rem; }
+    .footer-top { flex-direction: column; gap: 3rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<canvas id="starfield"></canvas>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">COS<span>M</span>OS</a>
+  <ul class="nav-links">
+    <li><a href="#solar">태양계</a></li>
+    <li><a href="#deep">심우주</a></li>
+    <li><a href="#timeline">역사</a></li>
+    <li><a href="#missions">탐사</a></li>
+    <li><a href="#physics">물리학</a></li>
+    <li><a href="#future">미래</a></li>
+  </ul>
+  <div class="nav-coords" id="navCoords">RA 00h 00m 00s / DEC +00°00′</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <p class="hero-eyebrow">우주 탐험 아카이브 — 2024</p>
+  <h1 class="hero-title">
+    <span>우주를</span><br>
+    <span class="line2">탐험하라</span>
+  </h1>
+  <p class="hero-sub">138억 년의 역사, 2조 개의 은하, 그리고 무한한 가능성. 우리는 모두 별의 먼지로 만들어졌다. 이 광대한 우주의 신비를 함께 탐험해보자.</p>
+  <div class="hero-cta">
+    <a href="#solar" class="btn-primary">탐험 시작하기</a>
+    <a href="#timeline" class="btn-ghost">우주 역사 보기</a>
+  </div>
+  <div class="hero-stat">
+    <div class="hero-stat-num">2조</div>
+    <div class="hero-stat-label">관측 가능한 은하의 수</div>
+  </div>
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+    <span class="scroll-text">Scroll to explore</span>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-section">
+  <div class="marquee-track">
+    <span class="marquee-item">빛의 속도: 299,792km/s</span><span class="marquee-item marquee-sep">✦</span>
+    <span class="marquee-item">태양까지의 거리: 1억 5천만 km</span><span class="marquee-item marquee-sep">✦</span>
+    <span class="marquee-item">우주의 나이: 138억 년</span><span class="marquee-item marquee-sep">✦</span>
+    <span class="marquee-item">관측 가능한 우주의 지름: 930억 광년</span><span class="marquee-item marquee-sep">✦</span>
+    <span class="marquee-item">우주의 구성: 암흑 에너지 68% / 암흑 물질 27% / 일반 물질 5%</span><span class="marquee-item marquee-sep">✦</span>
+    <span class="marquee-item">알려진 외계행성: 5,600개 이상</span><span class="marquee-item marquee-sep">✦</span>
+    <!-- duplicate for seamless loop -->
+    <span class="marquee-item">빛의 속도: 299,792km/s</span><span class="marquee-item marquee-sep">✦</span>
+    <span class="marquee-item">태양까지의 거리: 1억 5천만 km</span><span class="marquee-item marquee-sep">✦</span>
+    <span class="marquee-item">우주의 나이: 138억 년</span><span class="marquee-item marquee-sep">✦</span>
+    <span class="marquee-item">관측 가능한 우주의 지름: 930억 광년</span><span class="marquee-item marquee-sep">✦</span>
+    <span class="marquee-item">우주의 구성: 암흑 에너지 68% / 암흑 물질 27% / 일반 물질 5%</span><span class="marquee-item marquee-sep">✦</span>
+    <span class="marquee-item">알려진 외계행성: 5,600개 이상</span><span class="marquee-item marquee-sep">✦</span>
+  </div>
+</div>
+
+<!-- SOLAR SYSTEM -->
+<section id="solar" class="solar-section">
+  <div class="section-header reveal">
+    <span class="section-num">01 /</span>
+    <h2 class="section-title">태양계</h2>
+    <div class="section-line"></div>
+  </div>
+  <p class="solar-intro reveal">약 46억 년 전 성운에서 형성된 태양계는 태양과 그 주변을 공전하는 8개의 행성, 소행성대, 혜성, 카이퍼 벨트로 이루어진다. 태양은 태양계 전체 질량의 99.86%를 차지한다.</p>
+  <div class="planets-grid">
+    <!-- Mercury -->
+    <div class="planet-card reveal">
+      <div class="planet-num">01 — 수성</div>
+      <div class="planet-icon p-mercury"></div>
+      <div class="planet-name">수성</div>
+      <div class="planet-type">암석형 행성 / 지구형</div>
+      <p class="planet-desc">태양에 가장 가까운 행성으로, 대기가 거의 없어 낮과 밤의 온도 차이가 극심하다. 표면은 크레이터로 뒤덮여 있으며 달과 유사한 모습을 하고 있다.</p>
+      <div class="planet-stats">
+        <div class="planet-stat-row"><span>공전 주기</span><span>87.97일</span></div>
+        <div class="planet-stat-row"><span>표면 온도</span><span>-173 ~ 427°C</span></div>
+        <div class="planet-stat-row"><span>지름</span><span>4,879 km</span></div>
+        <div class="planet-stat-row"><span>위성 수</span><span>0개</span></div>
+      </div>
+    </div>
+    <!-- Venus -->
+    <div class="planet-card reveal">
+      <div class="planet-num">02 — 금성</div>
+      <div class="planet-icon p-venus"></div>
+      <div class="planet-name">금성</div>
+      <div class="planet-type">암석형 행성 / 지구형</div>
+      <p class="planet-desc">태양계에서 가장 뜨거운 행성. 짙은 이산화탄소 대기가 강한 온실 효과를 일으켜 표면 온도가 465°C에 달한다. 역행 자전으로 태양이 서쪽에서 뜬다.</p>
+      <div class="planet-stats">
+        <div class="planet-stat-row"><span>공전 주기</span><span>224.7일</span></div>
+        <div class="planet-stat-row"><span>표면 온도</span><span>465°C</span></div>
+        <div class="planet-stat-row"><span>지름</span><span>12,104 km</span></div>
+        <div class="planet-stat-row"><span>위성 수</span><span>0개</span></div>
+      </div>
+    </div>
+    <!-- Earth -->
+    <div class="planet-card reveal">
+      <div class="planet-num">03 — 지구</div>
+      <div class="planet-icon p-earth"></div>
+      <div class="planet-name">지구</div>
+      <div class="planet-type">암석형 행성 / 거주 가능</div>
+      <p class="planet-desc">현재까지 알려진 유일한 생명체 거주 행성. 표면의 71%가 물로 덮여 있고 산소와 질소 대기를 가지고 있다. 자기장이 우주 방사선으로부터 생명체를 보호한다.</p>
+      <div class="planet-stats">
+        <div class="planet-stat-row"><span>공전 주기</span><span>365.25일</span></div>
+        <div class="planet-stat-row"><span>표면 온도</span><span>-88 ~ 58°C</span></div>
+        <div class="planet-stat-row"><span>지름</span><span>12,742 km</span></div>
+        <div class="planet-stat-row"><span>위성 수</span><span>1개 (달)</span></div>
+      </div>
+    </div>
+    <!-- Mars -->
+    <div class="planet-card reveal">
+      <div class="planet-num">04 — 화성</div>
+      <div class="planet-icon p-mars"></div>
+      <div class="planet-name">화성</div>
+      <div class="planet-type">암석형 행성 / 붉은 행성</div>
+      <p class="planet-desc">산화철 먼지로 붉게 보이는 화성. 태양계 최고봉 올림푸스 몬스(21.9km)가 있다. 과거 물이 흘렀던 흔적이 발견되며, 인류의 다음 목적지로 주목받는다.</p>
+      <div class="planet-stats">
+        <div class="planet-stat-row"><span>공전 주기</span><span>686.97일</span></div>
+        <div class="planet-stat-row"><span>표면 온도</span><span>-153 ~ 20°C</span></div>
+        <div class="planet-stat-row"><span>지름</span><span>6,779 km</span></div>
+        <div class="planet-stat-row"><span>위성 수</span><span>2개</span></div>
+      </div>
+    </div>
+    <!-- Jupiter -->
+    <div class="planet-card reveal">
+      <div class="planet-num">05 — 목성</div>
+      <div class="planet-icon p-jupiter"></div>
+      <div class="planet-name">목성</div>
+      <div class="planet-type">가스 거성 / 행성의 왕</div>
+      <p class="planet-desc">태양계 최대의 행성으로 지구의 1,300배 이상의 부피를 가진다. 대적점은 지구보다 큰 거대한 폭풍으로 350년 이상 지속되고 있다. 95개의 위성을 거느린다.</p>
+      <div class="planet-stats">
+        <div class="planet-stat-row"><span>공전 주기</span><span>11.86년</span></div>
+        <div class="planet-stat-row"><span>구름 온도</span><span>-108°C</span></div>
+        <div class="planet-stat-row"><span>지름</span><span>139,820 km</span></div>
+        <div class="planet-stat-row"><span>위성 수</span><span>95개</span></div>
+      </div>
+    </div>
+    <!-- Saturn -->
+    <div class="planet-card reveal">
+      <div class="planet-num">06 — 토성</div>
+      <div class="planet-icon p-saturn"></div>
+      <div class="planet-name">토성</div>
+      <div class="planet-type">가스 거성 / 고리 행성</div>
+      <p class="planet-desc">얼음과 암석으로 구성된 장엄한 고리를 가진 행성. 밀도가 물보다 낮아 물에 뜰 수 있는 유일한 행성이다. 위성 타이탄은 짙은 대기를 가진 독특한 세계다.</p>
+      <div class="planet-stats">
+        <div class="planet-stat-row"><span>공전 주기</span><span>29.46년</span></div>
+        <div class="planet-stat-row"><span>구름 온도</span><span>-178°C</span></div>
+        <div class="planet-stat-row"><span>지름</span><span>116,460 km</span></div>
+        <div class="planet-stat-row"><span>위성 수</span><span>146개</span></div>
+      </div>
+    </div>
+    <!-- Uranus -->
+    <div class="planet-card reveal">
+      <div class="planet-num">07 — 천왕성</div>
+      <div class="planet-icon p-uranus"></div>
+      <div class="planet-name">천왕성</div>
+      <div class="planet-type">얼음 거성 / 기울어진 행성</div>
+      <p class="planet-desc">자전축이 97.8° 기울어져 옆으로 구르듯 태양을 공전한다. 메탄 대기로 청록색을 띠며, 내부에는 얼음과 암석이 가득하다. 27개의 위성 모두 셰익스피어 작품에서 이름을 따왔다.</p>
+      <div class="planet-stats">
+        <div class="planet-stat-row"><span>공전 주기</span><span>84.01년</span></div>
+        <div class="planet-stat-row"><span>최저 온도</span><span>-224°C</span></div>
+        <div class="planet-stat-row"><span>지름</span><span>50,724 km</span></div>
+        <div class="planet-stat-row"><span>위성 수</span><span>27개</span></div>
+      </div>
+    </div>
+    <!-- Neptune -->
+    <div class="planet-card reveal">
+      <div class="planet-num">08 — 해왕성</div>
+      <div class="planet-icon p-neptune"></div>
+      <div class="planet-name">해왕성</div>
+      <div class="planet-type">얼음 거성 / 바람의 행성</div>
+      <p class="planet-desc">태양계 외곽의 차갑고 어두운 세계. 초속 2,100km의 폭풍이 부는 태양계에서 가장 빠른 바람의 행성이다. 수학적 계산으로 발견된 최초의 행성이기도 하다.</p>
+      <div class="planet-stats">
+        <div class="planet-stat-row"><span>공전 주기</span><span>164.8년</span></div>
+        <div class="planet-stat-row"><span>표면 온도</span><span>-218°C</span></div>
+        <div class="planet-stat-row"><span>지름</span><span>49,244 km</span></div>
+        <div class="planet-stat-row"><span>위성 수</span><span>16개</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEEP SPACE OBJECTS -->
+<section id="deep" class="deep-section">
+  <div class="section-header reveal">
+    <span class="section-num">02 /</span>
+    <h2 class="section-title">심우주 천체</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <!-- Nebula -->
+  <div class="dso-feature reveal">
+    <div class="dso-visual">
+      <svg class="nebula-svg" viewBox="0 0 600 450" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="ng1" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#6e3bff" stop-opacity="0.8"/>
+            <stop offset="40%" stop-color="#00d4aa" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#01010a" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="ng2" cx="30%" cy="60%" r="40%">
+            <stop offset="0%" stop-color="#e84855" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#01010a" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="ng3" cx="70%" cy="30%" r="35%">
+            <stop offset="0%" stop-color="#d4a843" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#01010a" stop-opacity="0"/>
+          </radialGradient>
+          <filter id="blur1"><feGaussianBlur stdDeviation="15"/></filter>
+          <filter id="blur2"><feGaussianBlur stdDeviation="8"/></filter>
+        </defs>
+        <rect width="600" height="450" fill="#01010a"/>
+        <ellipse cx="300" cy="225" rx="220" ry="180" fill="url(#ng1)" filter="url(#blur1)"/>
+        <ellipse cx="200" cy="280" rx="150" ry="120" fill="url(#ng2)" filter="url(#blur1)"/>
+        <ellipse cx="420" cy="160" rx="130" ry="100" fill="url(#ng3)" filter="url(#blur1)"/>
+        <!-- Stars -->
+        <g fill="white">
+          <circle cx="80" cy="40" r="1.5" opacity="0.9"/>
+          <circle cx="150" cy="80" r="1" opacity="0.7"/>
+          <circle cx="300" cy="220" r="2.5" opacity="1"/>
+          <circle cx="420" cy="150" r="1" opacity="0.8"/>
+          <circle cx="520" cy="60" r="1.5" opacity="0.6"/>
+          <circle cx="50" cy="300" r="1" opacity="0.7"/>
+          <circle cx="550" cy="380" r="1.5" opacity="0.8"/>
+          <circle cx="200" cy="400" r="1" opacity="0.5"/>
+          <circle cx="380" cy="350" r="1" opacity="0.7"/>
+          <circle cx="480" cy="280" r="2" opacity="0.9"/>
+          <circle cx="140" cy="180" r="1" opacity="0.6"/>
+          <circle cx="360" cy="80" r="1.5" opacity="0.8"/>
+          <circle cx="240" cy="130" r="1" opacity="0.7"/>
+          <circle cx="460" cy="420" r="1" opacity="0.5"/>
+          <circle cx="580" cy="200" r="1.5" opacity="0.7"/>
+        </g>
+        <!-- bright center -->
+        <circle cx="300" cy="225" r="4" fill="white" opacity="0.9" filter="url(#blur2)"/>
+        <circle cx="300" cy="225" r="2" fill="white" opacity="1"/>
+      </svg>
+    </div>
+    <div class="dso-content">
+      <div class="dso-tag">NGC 1952 — 성운 (NEBULA)</div>
+      <h3>게 성운</h3>
+      <p>1054년 중국과 아랍 천문학자들이 관측한 초신성 폭발의 잔해. 지구로부터 약 6,500광년 떨어진 황소자리에 위치하며, 중심부에는 초당 30회 자전하는 펄사가 존재한다.</p>
+      <p>성운의 지름은 약 11광년이며 매년 약 1,500km/s의 속도로 팽창하고 있다. 허블 우주망원경이 촬영한 가장 아름다운 천체 중 하나로 꼽힌다.</p>
+      <div class="dso-data">
+        <div><div class="dso-datum-label">거리</div><div class="dso-datum-val">6,500 LY</div></div>
+        <div><div class="dso-datum-label">지름</div><div class="dso-datum-val">11 LY</div></div>
+        <div><div class="dso-datum-label">팽창속도</div><div class="dso-datum-val">1,500 km/s</div></div>
+        <div><div class="dso-datum-label">발견</div><div class="dso-datum-val">1054 AD</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Black Hole -->
+  <div class="dso-feature reverse reveal">
+    <div class="dso-visual">
+      <svg class="blackhole-svg" viewBox="0 0 600 450" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="bh-accretion" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#01010a"/>
+            <stop offset="30%" stop-color="#d4a843" stop-opacity="0.9"/>
+            <stop offset="50%" stop-color="#e84855" stop-opacity="0.6"/>
+            <stop offset="70%" stop-color="#6e3bff" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#01010a" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="bh-shadow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#000000"/>
+            <stop offset="85%" stop-color="#000000"/>
+            <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+          </radialGradient>
+          <filter id="bhblur"><feGaussianBlur stdDeviation="12"/></filter>
+          <filter id="bhglow"><feGaussianBlur stdDeviation="4"/></filter>
+        </defs>
+        <rect width="600" height="450" fill="#01010a"/>
+        <!-- Accretion disk glow -->
+        <ellipse cx="300" cy="225" rx="200" ry="60" fill="url(#bh-accretion)" filter="url(#bhblur)"/>
+        <!-- Accretion disk sharper -->
+        <ellipse cx="300" cy="225" rx="170" ry="40" fill="none" stroke="#d4a843" stroke-width="8" opacity="0.5"/>
+        <ellipse cx="300" cy="225" rx="150" ry="30" fill="none" stroke="#e84855" stroke-width="4" opacity="0.4"/>
+        <!-- Event horizon (black circle) -->
+        <circle cx="300" cy="225" r="85" fill="url(#bh-shadow)"/>
+        <!-- Photon ring -->
+        <circle cx="300" cy="225" r="90" fill="none" stroke="#d4a843" stroke-width="3" opacity="0.8" filter="url(#bhglow)"/>
+        <!-- Stars being lensed -->
+        <g fill="white" opacity="0.6">
+          <circle cx="100" cy="100" r="1"/>
+          <circle cx="500" cy="80" r="1.5"/>
+          <circle cx="80" cy="350" r="1"/>
+          <circle cx="520" cy="370" r="1"/>
+          <circle cx="50" cy="200" r="1.5"/>
+          <circle cx="550" cy="250" r="1"/>
+        </g>
+      </svg>
+    </div>
+    <div class="dso-content">
+      <div class="dso-tag">M87* — 블랙홀 (BLACK HOLE)</div>
+      <h3>블랙홀</h3>
+      <p>중력이 너무 강해 빛조차 탈출하지 못하는 시공간의 특이점. 2019년 사건지평선 망원경(EHT)이 인류 최초로 블랙홀의 이미지를 포착하는 데 성공했다. M87 은하 중심에 위치한 이 블랙홀은 태양 질량의 65억 배에 달한다.</p>
+      <p>슈바르츠실트 반경 내에서는 어떤 물체도 탈출할 수 없으며, 이 경계를 사건 지평선이라 부른다. 호킹 복사 이론에 따르면 블랙홀은 서서히 증발한다.</p>
+      <div class="dso-data">
+        <div><div class="dso-datum-label">질량</div><div class="dso-datum-val">65억 M☉</div></div>
+        <div><div class="dso-datum-label">거리</div><div class="dso-datum-val">5,500만 LY</div></div>
+        <div><div class="dso-datum-label">반지름</div><div class="dso-datum-val">120AU</div></div>
+        <div><div class="dso-datum-label">촬영</div><div class="dso-datum-val">2019</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Galaxy -->
+  <div class="dso-feature reveal">
+    <div class="dso-visual">
+      <svg class="galaxy-svg" viewBox="0 0 600 450" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="gal-core" cx="50%" cy="50%" r="30%">
+            <stop offset="0%" stop-color="#fff8e7" stop-opacity="1"/>
+            <stop offset="40%" stop-color="#d4a843" stop-opacity="0.7"/>
+            <stop offset="100%" stop-color="#01010a" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="gal-halo" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#6e3bff" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#01010a" stop-opacity="0"/>
+          </radialGradient>
+          <filter id="galblur"><feGaussianBlur stdDeviation="6"/></filter>
+          <filter id="galsofter"><feGaussianBlur stdDeviation="2"/></filter>
+        </defs>
+        <rect width="600" height="450" fill="#01010a"/>
+        <!-- Halo -->
+        <ellipse cx="300" cy="225" rx="250" ry="200" fill="url(#gal-halo)"/>
+        <!-- Spiral arms – dots approach -->
+        <g fill="#8a88b8" opacity="0.5">
+          <!-- Arm 1 -->
+          <circle cx="300" cy="180" r="1.5"/><circle cx="320" cy="175" r="1"/><circle cx="340" cy="172" r="1.5"/>
+          <circle cx="360" cy="175" r="1"/><circle cx="378" cy="183" r="2"/><circle cx="390" cy="196" r="1.5"/>
+          <circle cx="398" cy="212" r="1"/><circle cx="400" cy="230" r="1.5"/><circle cx="395" cy="248" r="1"/>
+          <circle cx="385" cy="264" r="1.5"/><circle cx="370" cy="276" r="1"/>
+          <!-- Arm 2 -->
+          <circle cx="300" cy="270" r="1.5"/><circle cx="280" cy="275" r="1"/><circle cx="260" cy="278" r="1.5"/>
+          <circle cx="240" cy="275" r="1"/><circle cx="222" cy="267" r="2"/><circle cx="210" cy="254" r="1.5"/>
+          <circle cx="202" cy="238" r="1"/><circle cx="200" cy="220" r="1.5"/><circle cx="205" cy="202" r="1"/>
+          <circle cx="215" cy="186" r="1.5"/><circle cx="230" cy="174" r="1"/>
+          <!-- Outer stars -->
+          <circle cx="440" cy="225" r="1"/><circle cx="430" cy="180" r="1.5"/><circle cx="410" cy="155" r="1"/>
+          <circle cx="160" cy="225" r="1"/><circle cx="170" cy="270" r="1.5"/><circle cx="190" cy="295" r="1"/>
+          <circle cx="350" cy="320" r="1"/><circle cx="300" cy="340" r="1.5"/><circle cx="250" cy="315" r="1"/>
+          <circle cx="350" cy="130" r="1.5"/><circle cx="300" cy="110" r="1"/><circle cx="250" cy="135" r="1"/>
+        </g>
+        <!-- Brighter stars -->
+        <g fill="white">
+          <circle cx="320" cy="176" r="1"/><circle cx="392" cy="198" r="1.5"/><circle cx="278" cy="274" r="1"/>
+          <circle cx="212" cy="252" r="1.5"/>
+        </g>
+        <!-- Core -->
+        <ellipse cx="300" cy="225" rx="40" ry="30" fill="url(#gal-core)" filter="url(#galblur)"/>
+        <ellipse cx="300" cy="225" rx="15" ry="10" fill="#fff8e7" opacity="0.9"/>
+        <circle cx="300" cy="225" r="4" fill="white" opacity="1"/>
+      </svg>
+    </div>
+    <div class="dso-content">
+      <div class="dso-tag">NGC 224 — 은하 (GALAXY)</div>
+      <h3>안드로메다 은하</h3>
+      <p>우리 은하에서 가장 가까운 대형 나선 은하로, 맨눈으로 관측 가능한 가장 멀리 있는 천체다. 약 1조 개의 별을 포함하며, 약 45억 년 후 우리 은하와 충돌할 것으로 예측된다.</p>
+      <p>두 은하의 충돌은 대규모 별 형성을 촉진하지만, 별 간의 거리가 너무 넓어 직접적인 충돌은 드물다. 최종적으로는 거대한 타원 은하 '밀코메다'가 형성될 것이다.</p>
+      <div class="dso-data">
+        <div><div class="dso-datum-label">거리</div><div class="dso-datum-val">254만 LY</div></div>
+        <div><div class="dso-datum-label">별의 수</div><div class="dso-datum-val">1조 개</div></div>
+        <div><div class="dso-datum-label">지름</div><div class="dso-datum-val">22만 LY</div></div>
+        <div><div class="dso-datum-label">충돌 예정</div><div class="dso-datum-val">45억 년 후</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<section id="timeline" class="timeline-section">
+  <div class="section-header reveal">
+    <span class="section-num">03 /</span>
+    <h2 class="section-title">우주 탐험의 역사</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-date">1957년 10월 4일</div>
+      <h3 class="timeline-event">스푸트니크 1호 발사</h3>
+      <p class="timeline-body">소련이 세계 최초의 인공위성 스푸트니크 1호를 발사하며 우주 시대의 막을 열었다. 지름 58cm의 작은 금속구가 보내는 신호는 전 세계를 충격에 빠뜨렸고, 미·소 우주 경쟁의 시작을 알렸다.</p>
+      <span class="timeline-agency">소련 / OKB-1</span>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-date">1961년 4월 12일</div>
+      <h3 class="timeline-event">가가린, 인류 최초 우주 비행</h3>
+      <p class="timeline-body">유리 가가린이 보스토크 1호를 타고 108분간 지구 궤도를 비행한 최초의 인간이 되었다. "지구는 푸르다"는 그의 말은 인류 역사상 가장 유명한 발언 중 하나가 되었다.</p>
+      <span class="timeline-agency">소련 / 로스코스모스</span>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-date">1969년 7월 20일</div>
+      <h3 class="timeline-event">아폴로 11호, 달 착륙</h3>
+      <p class="timeline-body">닐 암스트롱과 버즈 올드린이 인류 최초로 달 표면에 발을 내디뎠다. "한 인간에게는 작은 발걸음이지만, 인류에게는 위대한 도약"이라는 말과 함께 5억 명이 TV 중계를 지켜봤다.</p>
+      <span class="timeline-agency">미국 NASA / 아폴로 계획</span>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-date">1977년 9월 5일</div>
+      <h3 class="timeline-event">보이저 1호 발사</h3>
+      <p class="timeline-body">목성과 토성 탐사를 위해 발사된 보이저 1호는 현재 태양계를 벗어나 성간 공간을 항해하는 인류가 만든 가장 먼 물체다. 2023년 현재 지구에서 약 235억 km 이상 떨어져 있다.</p>
+      <span class="timeline-agency">미국 NASA / JPL</span>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-date">1990년 4월 24일</div>
+      <h3 class="timeline-event">허블 우주망원경 발사</h3>
+      <p class="timeline-body">대기권 밖에서 우주를 관측하는 허블 우주망원경이 발사되었다. 초기 거울 결함을 수리 후 수십 년간 수만 장의 경이로운 우주 사진을 전송하며 우주론의 패러다임을 바꾸었다.</p>
+      <span class="timeline-agency">미국 NASA / ESA</span>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-date">2012년 8월 6일</div>
+      <h3 class="timeline-event">큐리오시티 화성 착륙</h3>
+      <p class="timeline-body">자동차 크기의 탐사 로버 큐리오시티가 게일 크레이터에 착륙, 화성의 과거 거주 가능성을 탐사하기 시작했다. 스카이크레인 방식의 극적인 착륙은 '공포의 7분'으로 불린다.</p>
+      <span class="timeline-agency">미국 NASA / JPL</span>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-date">2021년 12월 25일</div>
+      <h3 class="timeline-event">제임스 웹 우주망원경 발사</h3>
+      <p class="timeline-body">허블의 후계자인 제임스 웹 우주망원경이 발사되어 L2 라그랑주 점에 자리를 잡았다. 적외선 관측으로 우주 탄생 직후의 최초의 은하와 별을 관측하며 새로운 우주의 시대를 열고 있다.</p>
+      <span class="timeline-agency">NASA / ESA / CSA</span>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-date">2025년 이후</div>
+      <h3 class="timeline-event">아르테미스, 달로의 귀환</h3>
+      <p class="timeline-body">NASA의 아르테미스 계획은 반세기 만에 인류를 달로 돌려보내는 것을 목표로 한다. 최초의 여성과 유색인종을 달에 착륙시키고, 달 기지 건설과 화성 탐사의 발판을 마련하고자 한다.</p>
+      <span class="timeline-agency">NASA / ESA / JAXA</span>
+    </div>
+  </div>
+</section>
+
+<!-- MISSIONS -->
+<section id="missions" class="missions-section">
+  <div class="section-header reveal">
+    <span class="section-num">04 /</span>
+    <h2 class="section-title">주요 우주 탐사</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="missions-grid">
+    <div class="mission-card reveal">
+      <div class="mission-bg"></div>
+      <div class="mission-year">69</div>
+      <div class="mission-status"><span class="status-dot status-complete"></span><span class="status-complete-text">완료</span></div>
+      <div class="mission-name">아폴로 계획</div>
+      <div class="mission-target">목적지 / 달 (月)</div>
+      <p class="mission-desc">인류 역사상 가장 위대한 우주 탐사. 1969년부터 1972년까지 총 6회에 걸쳐 12명의 우주비행사가 달 표면을 밟았다. 총 382kg의 월석 표본을 가져와 태양계 형성의 비밀을 밝혔다.</p>
+    </div>
+    <div class="mission-card reveal">
+      <div class="mission-bg"></div>
+      <div class="mission-year">97</div>
+      <div class="mission-status"><span class="status-dot status-complete"></span><span class="status-complete-text">완료</span></div>
+      <div class="mission-name">카시니-하위헌스</div>
+      <div class="mission-target">목적지 / 토성과 타이탄</div>
+      <p class="mission-desc">13년간 토성계를 탐사한 대형 임무. 토성의 고리 구조와 위성 엔켈라두스의 수증기 분출, 타이탄의 메탄 호수를 발견했다. 2017년 토성 대기권에 돌입하며 임무 종료.</p>
+    </div>
+    <div class="mission-card reveal">
+      <div class="mission-bg"></div>
+      <div class="mission-year">04</div>
+      <div class="mission-status"><span class="status-dot status-active"></span><span class="status-active-text">진행 중</span></div>
+      <div class="mission-name">로제타</div>
+      <div class="mission-target">목적지 / 추류모프-게라시멘코 혜성</div>
+      <p class="mission-desc">인류 최초로 혜성 궤도를 돌고 표면에 탐사정 필레를 착륙시킨 임무. 혜성이 원시 태양계의 시간 캡슐임을 확인하고 아미노산을 포함한 유기 분자를 발견했다.</p>
+    </div>
+    <div class="mission-card reveal">
+      <div class="mission-bg"></div>
+      <div class="mission-year">20</div>
+      <div class="mission-status"><span class="status-dot status-active"></span><span class="status-active-text">진행 중</span></div>
+      <div class="mission-name">퍼시비어런스</div>
+      <div class="mission-target">목적지 / 화성 예제로 크레이터</div>
+      <p class="mission-desc">화성 생명체의 흔적을 탐색 중인 최신 로버. 소형 헬리콥터 인제뉴이티로 다른 행성에서의 최초 동력 비행을 성공시켰다. 미래 귀환 임무를 위한 암석 표본을 수집 중이다.</p>
+    </div>
+    <div class="mission-card reveal">
+      <div class="mission-bg"></div>
+      <div class="mission-year">06</div>
+      <div class="mission-status"><span class="status-dot status-complete"></span><span class="status-complete-text">완료</span></div>
+      <div class="mission-name">하야부사 2</div>
+      <div class="mission-target">목적지 / 소행성 류구</div>
+      <p class="mission-desc">일본의 소행성 탐사선으로 류구에 인공 크레이터를 만들고 지하 암석 표본을 채취해 지구로 귀환했다. 20억 km를 여행하며 태양계 초기 물질의 비밀을 담은 표본을 가져왔다.</p>
+    </div>
+    <div class="mission-card reveal">
+      <div class="mission-bg"></div>
+      <div class="mission-year">30s</div>
+      <div class="mission-status"><span class="status-dot status-future"></span><span class="status-future-text">계획 중</span></div>
+      <div class="mission-name">화성 유인 탐사</div>
+      <div class="mission-target">목적지 / 화성 (2030년대)</div>
+      <p class="mission-desc">NASA와 SpaceX 등이 준비 중인 화성 유인 탐사. 약 7개월의 여정과 방사선, 심리적 고립 등 수많은 난관을 극복해야 한다. 성공 시 인류는 다행성 종이 된다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SCALE -->
+<section class="scale-section">
+  <div class="section-header reveal">
+    <span class="section-num">05 /</span>
+    <h2 class="section-title">우주의 규모</h2>
+    <div class="section-line"></div>
+  </div>
+  <p class="scale-intro reveal">우주의 크기를 인간의 척도로 이해하는 것은 불가능에 가깝다. 태양이 오렌지 크기라면 지구는 1mm, 명왕성은 36m 떨어진 곳에 있다. 그것이 태양계다. 우리 은하는 그것의 100억 배다.</p>
+  <div class="scale-items">
+    <div class="scale-item reveal">
+      <div><div class="scale-object-name">지구</div><div class="scale-object-sub">HOME PLANET</div></div>
+      <div class="scale-bar-container"><div class="scale-bar" data-width="0.5"></div></div>
+      <div class="scale-size">12,742 km</div>
+    </div>
+    <div class="scale-item reveal">
+      <div><div class="scale-object-name">태양</div><div class="scale-object-sub">OUR STAR</div></div>
+      <div class="scale-bar-container"><div class="scale-bar" data-width="5"></div></div>
+      <div class="scale-size">1,392,700 km</div>
+    </div>
+    <div class="scale-item reveal">
+      <div><div class="scale-object-name">태양계</div><div class="scale-object-sub">SOLAR SYSTEM</div></div>
+      <div class="scale-bar-container"><div class="scale-bar" data-width="15"></div></div>
+      <div class="scale-size">약 287.5 AU</div>
+    </div>
+    <div class="scale-item reveal">
+      <div><div class="scale-object-name">가장 가까운 별</div><div class="scale-object-sub">PROXIMA CENTAURI</div></div>
+      <div class="scale-bar-container"><div class="scale-bar" data-width="30"></div></div>
+      <div class="scale-size">4.24 광년</div>
+    </div>
+    <div class="scale-item reveal">
+      <div><div class="scale-object-name">우리 은하</div><div class="scale-object-sub">MILKY WAY</div></div>
+      <div class="scale-bar-container"><div class="scale-bar" data-width="55"></div></div>
+      <div class="scale-size">10만 광년</div>
+    </div>
+    <div class="scale-item reveal">
+      <div><div class="scale-object-name">은하군</div><div class="scale-object-sub">LOCAL GROUP</div></div>
+      <div class="scale-bar-container"><div class="scale-bar" data-width="70"></div></div>
+      <div class="scale-size">1,000만 광년</div>
+    </div>
+    <div class="scale-item reveal">
+      <div><div class="scale-object-name">관측 가능 우주</div><div class="scale-object-sub">OBSERVABLE UNIVERSE</div></div>
+      <div class="scale-bar-container"><div class="scale-bar" data-width="100"></div></div>
+      <div class="scale-size">930억 광년</div>
+    </div>
+  </div>
+</section>
+
+<!-- EXOPLANETS -->
+<section id="exo" class="exo-section">
+  <div class="section-header reveal">
+    <span class="section-num">06 /</span>
+    <h2 class="section-title">외계 행성</h2>
+    <div class="section-line"></div>
+  </div>
+  <p class="solar-intro reveal">우리 태양계 밖 다른 별을 공전하는 행성들. 케플러 우주망원경 이후 수천 개가 발견되었다. 일부는 생명체 존재 가능성이 있는 거주 가능 구역에 위치한다.</p>
+  <div class="exo-grid">
+    <div class="exo-card reveal">
+      <svg class="exo-visual" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs><radialGradient id="eg1" cx="40%" cy="40%" r="60%"><stop offset="0%" stop-color="#4fc3f7"/><stop offset="60%" stop-color="#0d47a1"/><stop offset="100%" stop-color="#01010a"/></radialGradient></defs>
+        <circle cx="50" cy="50" r="45" fill="url(#eg1)"/>
+        <circle cx="35" cy="38" r="10" fill="#2e7d32" opacity="0.7"/>
+        <circle cx="65" cy="45" r="7" fill="#2e7d32" opacity="0.6"/>
+        <circle cx="50" cy="62" r="8" fill="#2e7d32" opacity="0.5"/>
+      </svg>
+      <div>
+        <div class="exo-catalog">KEPLER-452b</div>
+        <div class="exo-name">케플러-452b</div>
+        <p class="exo-desc">지구의 사촌이라 불리는 외계행성. 지구보다 60% 크고, G형 항성의 거주 가능 구역에 위치한다. 지구에서 1,400광년 거리. 공전 주기 385일로 지구와 유사하다.</p>
+      </div>
+    </div>
+    <div class="exo-card reveal">
+      <svg class="exo-visual" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs><radialGradient id="eg2" cx="40%" cy="35%" r="60%"><stop offset="0%" stop-color="#ff8a65"/><stop offset="100%" stop-color="#4a0000"/></radialGradient></defs>
+        <circle cx="50" cy="50" r="45" fill="url(#eg2)"/>
+        <ellipse cx="50" cy="50" rx="48" ry="15" fill="none" stroke="#d4a843" stroke-width="3" opacity="0.6"/>
+        <ellipse cx="50" cy="50" rx="42" ry="10" fill="none" stroke="#ffd54f" stroke-width="2" opacity="0.4"/>
+      </svg>
+      <div>
+        <div class="exo-catalog">HD 189733b</div>
+        <div class="exo-name">HD 189733b</div>
+        <p class="exo-desc">유리 비가 내리는 지옥의 행성. 대기에서 규산염 입자 즉, 유리가 초속 8.7km의 강풍에 날려다닌다. 표면 온도 930°C의 뜨거운 목성형 행성이다.</p>
+      </div>
+    </div>
+    <div class="exo-card reveal">
+      <svg class="exo-visual" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs><radialGradient id="eg3" cx="40%" cy="40%" r="60%"><stop offset="0%" stop-color="#b39ddb"/><stop offset="50%" stop-color="#4a148c"/><stop offset="100%" stop-color="#01010a"/></radialGradient></defs>
+        <circle cx="50" cy="50" r="45" fill="url(#eg3)"/>
+        <circle cx="50" cy="50" r="20" fill="none" stroke="#ce93d8" stroke-width="1.5" opacity="0.5"/>
+        <circle cx="50" cy="50" r="30" fill="none" stroke="#9c27b0" stroke-width="1" opacity="0.3"/>
+      </svg>
+      <div>
+        <div class="exo-catalog">TRAPPIST-1e</div>
+        <div class="exo-name">트라피스트-1e</div>
+        <p class="exo-desc">지구와 가장 유사한 외계행성 중 하나. 적색왜성 TRAPPIST-1 주위를 도는 7개의 행성 중 하나로, 거주 가능 구역에 위치하며 액체 물의 존재 가능성이 가장 높다.</p>
+      </div>
+    </div>
+    <div class="exo-card reveal">
+      <svg class="exo-visual" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs><radialGradient id="eg4" cx="40%" cy="40%" r="60%"><stop offset="0%" stop-color="#80deea"/><stop offset="100%" stop-color="#00695c"/></radialGradient></defs>
+        <circle cx="50" cy="50" r="45" fill="url(#eg4)"/>
+        <path d="M20,50 Q50,20 80,50 Q50,80 20,50" fill="none" stroke="white" stroke-width="1" opacity="0.4"/>
+        <path d="M25,40 Q50,60 75,40" fill="none" stroke="white" stroke-width="0.8" opacity="0.3"/>
+      </svg>
+      <div>
+        <div class="exo-catalog">GJ 1214b</div>
+        <div class="exo-name">GJ 1214b</div>
+        <p class="exo-desc">대부분이 물로 이루어진 수상 행성. 고온·고압의 환경에서 물은 일반적인 상변화와 다른 이국적인 형태로 존재할 것으로 추정된다. 지구 반지름의 2.7배.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE -->
+<section class="quote-section">
+  <p class="quote-text reveal">우주를 알면 알수록, 우리는 얼마나 특별하고 동시에 얼마나 작은 존재인지 깨닫게 된다. 그러나 그 광대함 속에서도 우리는 생각할 수 있다 — 그것이 우주를 이해하는 유일한 생명체만이 가진 특권이다.</p>
+  <div class="quote-author reveal">칼 세이건<span class="quote-sep">—</span>코스모스</div>
+</section>
+
+<!-- PHYSICS -->
+<section id="physics" class="physics-section">
+  <div class="section-header reveal">
+    <span class="section-num">07 /</span>
+    <h2 class="section-title">우주를 지배하는 물리</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="physics-grid">
+    <div class="physics-card reveal">
+      <div class="physics-equation">E = mc²</div>
+      <div class="physics-name">질량-에너지 등가 원리</div>
+      <p class="physics-desc">아인슈타인의 특수 상대성 이론에서 유도된 이 공식은 질량과 에너지가 동등하며 서로 변환 가능함을 보여준다. 별 내부의 핵융합, 핵폭발, 입자-반입자 소멸 모두 이 원리를 따른다.</p>
+      <div class="physics-who">알버트 아인슈타인 — 1905</div>
+    </div>
+    <div class="physics-card reveal">
+      <div class="physics-equation">F = Gm₁m₂/r²</div>
+      <div class="physics-name">만유인력의 법칙</div>
+      <p class="physics-desc">두 물체 사이의 중력은 두 질량의 곱에 비례하고 거리의 제곱에 반비례한다. 행성의 궤도, 조석, 은하의 구조, 블랙홀 모두 이 법칙으로 설명된다. 우주의 가장 기본적인 힘.</p>
+      <div class="physics-who">아이작 뉴턴 — 1687</div>
+    </div>
+    <div class="physics-card reveal">
+      <div class="physics-equation">v = H₀ × d</div>
+      <div class="physics-name">허블-르메트르 법칙</div>
+      <p class="physics-desc">은하가 멀면 멀수록 더 빠르게 멀어진다는 우주 팽창의 법칙. 허블 상수 H₀는 약 70km/s/Mpc. 이 발견은 우주가 빅뱅으로 시작했다는 결정적 증거가 되었다.</p>
+      <div class="physics-who">에드윈 허블 — 1929</div>
+    </div>
+    <div class="physics-card reveal">
+      <div class="physics-equation">S = A/4</div>
+      <div class="physics-name">블랙홀 열역학</div>
+      <p class="physics-desc">호킹이 증명한 블랙홀의 엔트로피는 사건 지평선의 면적에 비례한다. 블랙홀도 온도를 가지며 호킹 복사를 방출해 결국 증발한다는 혁명적 발견은 양자 중력의 실마리를 제공했다.</p>
+      <div class="physics-who">스티븐 호킹 — 1974</div>
+    </div>
+    <div class="physics-card reveal">
+      <div class="physics-equation">Δx·Δp ≥ ℏ/2</div>
+      <div class="physics-name">하이젠베르크 불확정성 원리</div>
+      <p class="physics-desc">입자의 위치와 운동량을 동시에 정확히 알 수 없다. 이는 측정의 한계가 아닌 자연의 본질적 특성이다. 양자 요동이 우주 거대 구조의 씨앗이 되었다는 인플레이션 이론의 핵심.</p>
+      <div class="physics-who">베르너 하이젠베르크 — 1927</div>
+    </div>
+    <div class="physics-card reveal">
+      <div class="physics-equation">Λ = 8πρ/3H²</div>
+      <div class="physics-name">우주 상수 / 암흑 에너지</div>
+      <p class="physics-desc">아인슈타인이 정적 우주를 위해 도입했다가 폐기한 우주 상수가, 실제로 우주 팽창을 가속시키는 암흑 에너지로 부활했다. 우주 전체 에너지의 68%를 차지하는 미지의 존재.</p>
+      <div class="physics-who">알버트 아인슈타인 / Perlmutter — 1998</div>
+    </div>
+  </div>
+</section>
+
+<!-- TELESCOPES -->
+<section id="telescopes" class="telescope-section">
+  <div class="section-header reveal">
+    <span class="section-num">08 /</span>
+    <h2 class="section-title">우주를 보는 눈</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="telescope-content">
+    <div>
+      <div class="telescope-feature-name">제임스 웹<br>우주망원경</div>
+      <div class="telescope-feature-label">JAMES WEBB SPACE TELESCOPE / JWST</div>
+      <p style="font-size:0.95rem; line-height:1.9; color:var(--dust); font-weight:300; margin-bottom:2rem;">100억 달러를 투자해 30년에 걸쳐 개발된 인류 역사상 가장 강력한 우주 망원경. 지름 6.5m의 황금 베릴륨 거울로 138억 년 전 우주 탄생 직후의 빛을 포착한다. 태양-지구 L2 지점에서 -233°C의 환경에서 작동한다.</p>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+        <div><div class="dso-datum-label">발사일</div><div class="dso-datum-val">2021.12.25</div></div>
+        <div><div class="dso-datum-label">거울 직경</div><div class="dso-datum-val">6.5 m</div></div>
+        <div><div class="dso-datum-label">궤도</div><div class="dso-datum-val">L2 라그랑주</div></div>
+        <div><div class="dso-datum-label">개발비</div><div class="dso-datum-val">$100억</div></div>
+      </div>
+    </div>
+    <div class="telescope-list">
+      <div class="telescope-item reveal">
+        <div class="telescope-item-head">
+          <div class="telescope-item-name">갈릴레오 굴절망원경</div>
+          <div class="telescope-item-year">1609</div>
+        </div>
+        <p class="telescope-item-desc">목성의 4대 위성과 금성의 위상 변화를 발견해 지동설을 증명. 최초의 천문 망원경으로 인류의 우주관을 바꾼 혁명적 도구였다.</p>
+      </div>
+      <div class="telescope-item reveal">
+        <div class="telescope-item-head">
+          <div class="telescope-item-name">허블 우주망원경</div>
+          <div class="telescope-item-year">1990</div>
+        </div>
+        <p class="telescope-item-desc">대기 왜곡 없는 선명한 우주 이미지를 제공. 허블 딥 필드로 빈 하늘에 수천 개의 은하를 발견. 우주의 나이와 팽창 속도를 정밀 측정했다.</p>
+      </div>
+      <div class="telescope-item reveal">
+        <div class="telescope-item-head">
+          <div class="telescope-item-name">찬드라 X선 망원경</div>
+          <div class="telescope-item-year">1999</div>
+        </div>
+        <p class="telescope-item-desc">X선으로 블랙홀 주변 고온 가스, 초신성 잔해, 은하단의 고에너지 현상을 관측. 보이지 않던 우주의 격렬한 활동을 드러냈다.</p>
+      </div>
+      <div class="telescope-item reveal">
+        <div class="telescope-item-head">
+          <div class="telescope-item-name">사건 지평선 망원경</div>
+          <div class="telescope-item-year">2019</div>
+        </div>
+        <p class="telescope-item-desc">전 세계 8개 전파망원경을 연결해 지구 크기의 가상 망원경을 만들었다. 2019년 최초로 블랙홀의 그림자를 포착하는 데 성공했다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STAR TYPES -->
+<section class="stars-section">
+  <div class="section-header reveal">
+    <span class="section-num">09 /</span>
+    <h2 class="section-title">별의 종류</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="stars-grid">
+    <div class="star-type-card reveal">
+      <div class="star-glow" style="background:#ff8a65;"></div>
+      <div class="star-circle" style="background: radial-gradient(circle at 40% 40%, #ffccbc, #bf360c); box-shadow: 0 0 20px rgba(255,138,101,0.5);"></div>
+      <div class="star-class">CLASS M</div>
+      <div class="star-type-name">적색왜성</div>
+      <p class="star-type-desc">우주에서 가장 흔한 별. 수명이 수조 년에 달해 우주 나이보다 오래 사는 별들도 있다. 태양보다 훨씬 작고 어둡지만, 오랜 수명 덕에 생명체 발생 가능성도 논의된다.</p>
+      <div class="star-temp">온도: <strong>2,400 ~ 3,700 K</strong></div>
+    </div>
+    <div class="star-type-card reveal">
+      <div class="star-glow" style="background:#ffe082;"></div>
+      <div class="star-circle" style="background: radial-gradient(circle at 40% 40%, #fff9c4, #f57f17); box-shadow: 0 0 20px rgba(255,224,130,0.6);"></div>
+      <div class="star-class">CLASS G</div>
+      <div class="star-type-name">황색왜성</div>
+      <p class="star-type-desc">우리 태양이 바로 이 유형. 약 100억 년의 수명을 가지며 현재 태양은 46억 살. 생명체 거주 가능 구역을 형성하기에 적합한 온도와 안정성을 가진다.</p>
+      <div class="star-temp">온도: <strong>5,200 ~ 6,000 K</strong></div>
+    </div>
+    <div class="star-type-card reveal">
+      <div class="star-glow" style="background:#ce93d8;"></div>
+      <div class="star-circle" style="background: radial-gradient(circle at 40% 40%, #f3e5f5, #7b1fa2); box-shadow: 0 0 20px rgba(206,147,216,0.5);"></div>
+      <div class="star-class">CLASS O/B</div>
+      <div class="star-type-name">청색 거성</div>
+      <p class="star-type-desc">우주에서 가장 밝고 뜨거운 별. 수백만 ~ 수십억 배의 태양광을 방출하며 수백만 년이라는 짧은 수명을 마치고 초신성 폭발로 블랙홀이 된다.</p>
+      <div class="star-temp">온도: <strong>10,000 ~ 50,000 K</strong></div>
+    </div>
+    <div class="star-type-card reveal">
+      <div class="star-glow" style="background:#ef5350;"></div>
+      <div class="star-circle" style="background: radial-gradient(circle at 40% 40%, #ffcdd2, #b71c1c); box-shadow: 0 0 25px rgba(239,83,80,0.5); width: 48px; height: 48px;"></div>
+      <div class="star-class">CLASS K-M</div>
+      <div class="star-type-name">적색 거성</div>
+      <p class="star-type-desc">주계열성이 진화한 말년의 모습. 태양도 약 50억 년 후 지구 궤도까지 팽창하는 적색 거성이 된다. 표면 온도는 낮지만 크기가 엄청나 밝게 빛난다.</p>
+      <div class="star-temp">온도: <strong>3,500 ~ 5,000 K</strong></div>
+    </div>
+    <div class="star-type-card reveal">
+      <div class="star-glow" style="background:#e0e0e0;"></div>
+      <div class="star-circle" style="background: radial-gradient(circle at 40% 40%, #ffffff, #9e9e9e); box-shadow: 0 0 15px rgba(255,255,255,0.4);"></div>
+      <div class="star-class">REMNANT</div>
+      <div class="star-type-name">백색왜성</div>
+      <p class="star-type-desc">태양 크기 별의 진화 최종 단계. 지구 크기에 태양 질량이 압축된 천체로 밀도가 극도로 높다. 수천억 년에 걸쳐 식어 검은 왜성이 된다.</p>
+      <div class="star-temp">온도: <strong>8,000 ~ 40,000 K</strong></div>
+    </div>
+    <div class="star-type-card reveal">
+      <div class="star-glow" style="background:#00e5ff;"></div>
+      <div class="star-circle" style="background: radial-gradient(circle at 40% 40%, #e0f7fa, #006064); box-shadow: 0 0 20px rgba(0,229,255,0.7); width: 20px; height: 20px;"></div>
+      <div class="star-class">REMNANT</div>
+      <div class="star-type-name">중성자별</div>
+      <p class="star-type-desc">초신성 폭발 후 남는 극한의 천체. 직경 약 20km에 태양 질량 이상이 압축되어, 각설탕 크기의 물질이 수십억 톤에 달한다. 초당 수백 번 자전하며 펄사를 형성한다.</p>
+      <div class="star-temp">온도: <strong>600,000 K 이상</strong></div>
+    </div>
+    <div class="star-type-card reveal">
+      <div class="star-glow" style="background:#d4a843;"></div>
+      <div class="star-circle" style="background: radial-gradient(circle at 40% 40%, #fff8e1, #e65100); box-shadow: 0 0 20px rgba(212,168,67,0.6); width: 60px; height: 60px; border-radius: 50%;"></div>
+      <div class="star-class">HYPERGIANT</div>
+      <div class="star-type-name">극대거성</div>
+      <p class="star-type-desc">알려진 가장 큰 별들. 베텔게우스, 방패자리 UY 등이 여기 속한다. 태양의 1,000~2,000배 크기로, 태양계 전체를 채우고도 남는다. 수명은 불과 수백만 년.</p>
+      <div class="star-temp">온도: <strong>3,000 ~ 35,000 K</strong></div>
+    </div>
+    <div class="star-type-card reveal">
+      <div class="star-glow" style="background:#6e3bff;"></div>
+      <div class="star-circle" style="background: #01010a; border: 2px solid rgba(110,59,255,0.8); box-shadow: 0 0 20px rgba(110,59,255,0.6), inset 0 0 10px rgba(110,59,255,0.3);"></div>
+      <div class="star-class">SINGULARITY</div>
+      <div class="star-type-name">블랙홀</div>
+      <p class="star-type-desc">거대 질량 별의 최후. 중력 붕괴로 무한한 밀도의 특이점이 형성된다. 사건 지평선 내의 빛조차 탈출 불가. 우주에서 가장 신비롭고 극단적인 천체.</p>
+      <div class="star-temp">온도: <strong>사건 지평선 내부 미지</strong></div>
+    </div>
+  </div>
+</section>
+
+<!-- FUTURE -->
+<section id="future" class="future-section">
+  <div class="section-header reveal">
+    <span class="section-num">10 /</span>
+    <h2 class="section-title">우주 탐험의 미래</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="future-grid">
+    <div class="future-card reveal">
+      <div class="future-year">2030s</div>
+      <div class="future-title">화성 유인 탐사</div>
+      <p class="future-desc">NASA 아르테미스 계획과 SpaceX 스타십이 화성 유인 탐사를 준비 중이다. 7개월의 여정, 방사선 노출, 심리적 고립 등 극한의 도전을 극복해야 한다. 성공 시 인류 역사의 가장 위대한 순간이 될 것이다.</p>
+    </div>
+    <div class="future-card reveal">
+      <div class="future-year">2040s</div>
+      <div class="future-title">달 영구 기지 건설</div>
+      <p class="future-desc">NASA, ESA, 중국 CNSA가 달 남극에 영구 기지 건설을 목표로 하고 있다. 달의 얼음에서 물과 산소를, 헬륨-3에서 핵융합 에너지를 얻어 지구의 에너지 위기 해결에도 기여할 수 있다.</p>
+    </div>
+    <div class="future-card reveal">
+      <div class="future-year">2060+</div>
+      <div class="future-title">타이탄과 유로파 탐사</div>
+      <p class="future-desc">토성의 위성 타이탄에는 메탄 호수가, 목성의 위성 유로파에는 두꺼운 얼음층 아래 거대한 바다가 존재한다. 이곳에서 외계 생명체의 첫 발견이 이루어질 수 있다.</p>
+    </div>
+    <div class="future-card reveal">
+      <div class="future-year">2100+</div>
+      <div class="future-title">성간 탐사</div>
+      <p class="future-desc">브레이크스루 스타샷 계획은 레이저 빔으로 가속하는 나노 탐사선을 알파 센타우리로 보내는 것을 목표로 한다. 빛의 20%의 속도로 20년 만에 가장 가까운 별을 탐사할 수 있다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div>
+      <div class="footer-logo">COS<span>M</span>OS</div>
+      <p class="footer-tagline">우주의 경이로움을 탐험하는 아카이브. 별을 바라보는 것은 과거를 보는 것이다.</p>
+    </div>
+    <div class="footer-links-col">
+      <h4>탐험하기</h4>
+      <ul>
+        <li><a href="#solar">태양계</a></li>
+        <li><a href="#deep">심우주 천체</a></li>
+        <li><a href="#timeline">탐험의 역사</a></li>
+        <li><a href="#missions">주요 탐사</a></li>
+      </ul>
+    </div>
+    <div class="footer-links-col">
+      <h4>더 알아보기</h4>
+      <ul>
+        <li><a href="#physics">우주 물리학</a></li>
+        <li><a href="#exo">외계 행성</a></li>
+        <li><a href="#future">우주의 미래</a></li>
+        <li><a href="#telescopes">우주 망원경</a></li>
+      </ul>
+    </div>
+    <div class="footer-links-col">
+      <h4>참고 자료</h4>
+      <ul>
+        <li><a href="https://www.nasa.gov" target="_blank">NASA</a></li>
+        <li><a href="https://www.esa.int" target="_blank">ESA</a></li>
+        <li><a href="https://hubblesite.org" target="_blank">허블 사이트</a></li>
+        <li><a href="https://webb.nasa.gov" target="_blank">제임스 웹</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div>© 2024 COSMOS 우주 탐험 아카이브 — 모든 데이터는 NASA, ESA 공개 자료 기반</div>
+    <div class="footer-coords" id="footerCoords">LAST UPDATE: 2024.01.01 — JWST OPERATIONAL</div>
+  </div>
+</footer>
+
+<script>
+// Custom cursor
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; cursor.style.left = mx+'px'; cursor.style.top = my+'px'; });
+function animateRing() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  ring.style.left = rx+'px'; ring.style.top = ry+'px';
+  requestAnimationFrame(animateRing);
+}
+animateRing();
+document.querySelectorAll('a, button, .planet-card, .mission-card, .exo-card, .telescope-item, .future-card').forEach(el => {
+  el.addEventListener('mouseenter', () => { ring.style.width='50px'; ring.style.height='50px'; });
+  el.addEventListener('mouseleave', () => { ring.style.width='32px'; ring.style.height='32px'; });
+});
+
+// Starfield
+const canvas = document.getElementById('starfield');
+const ctx = canvas.getContext('2d');
+let stars = [];
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+function initStars() {
+  stars = [];
+  for (let i = 0; i < 280; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.5 + 0.2,
+      o: Math.random() * 0.8 + 0.1,
+      s: Math.random() * 0.3 + 0.05,
+      twinkle: Math.random() * Math.PI * 2
+    });
+  }
+}
+function drawStars() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  stars.forEach(s => {
+    s.twinkle += s.s * 0.02;
+    const opacity = s.o * (0.7 + 0.3 * Math.sin(s.twinkle));
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(240,238,252,${opacity})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+resizeCanvas();
+initStars();
+drawStars();
+window.addEventListener('resize', () => { resizeCanvas(); initStars(); });
+
+// Nav coordinates update
+const coordEl = document.getElementById('navCoords');
+function updateCoords() {
+  const scroll = window.scrollY;
+  const ra_h = Math.floor((scroll / 100) % 24).toString().padStart(2,'0');
+  const ra_m = Math.floor((scroll / 10) % 60).toString().padStart(2,'0');
+  const ra_s = Math.floor(scroll % 60).toString().padStart(2,'0');
+  const dec = (scroll / 100 % 90).toFixed(2);
+  if (coordEl) coordEl.textContent = `RA ${ra_h}h ${ra_m}m ${ra_s}s / DEC +${dec}°`;
+}
+window.addEventListener('scroll', updateCoords);
+
+// Reveal on scroll
+const reveals = document.querySelectorAll('.reveal');
+const timelineItems = document.querySelectorAll('.timeline-item');
+const scaleBars = document.querySelectorAll('.scale-bar');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+reveals.forEach(el => observer.observe(el));
+timelineItems.forEach(el => observer.observe(el));
+
+// Scale bars
+const scaleObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const w = parseFloat(entry.target.dataset.width);
+      entry.target.style.width = w + '%';
+      scaleObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.5 });
+scaleBars.forEach(bar => scaleObserver.observe(bar));
+
+// Smooth scroll for nav links
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  });
+});
+
+// Parallax on hero title
+window.addEventListener('scroll', () => {
+  const y = window.scrollY;
+  const heroTitle = document.querySelector('.hero-title');
+  if (heroTitle) heroTitle.style.transform = `translateY(${y * 0.3}px)`;
+  const heroSub = document.querySelector('.hero-sub');
+  if (heroSub) heroSub.style.transform = `translateY(${y * 0.15}px)`;
+});
+</script>
+</body>
+</html>
